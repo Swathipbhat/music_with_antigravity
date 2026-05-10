@@ -15,13 +15,16 @@ const tracks = [
 ];
 
 let nextId = 3;
+let currentPlaylist = 'lofi'; // 'lofi', 'liked', or 'custom_...'
+let customPlaylists = []; // { id: string, name: string, trackIds: [] }
+let contextMenuTargetTrackId = null;
 
 // ===== Persistence =====
-function loadSavedTracks() {
+function loadSavedData() {
     try {
-        const saved = localStorage.getItem('vibe_player_yt_tracks');
-        if (saved) {
-            const ytTracks = JSON.parse(saved);
+        const savedYT = localStorage.getItem('vibe_player_yt_tracks');
+        if (savedYT) {
+            const ytTracks = JSON.parse(savedYT);
             ytTracks.forEach(t => {
                 if (!tracks.find(existing => existing.videoId === t.videoId)) {
                     t.id = nextId++;
@@ -29,7 +32,24 @@ function loadSavedTracks() {
                 }
             });
         }
-    } catch(e) { console.warn('Failed to load saved tracks:', e); }
+        
+        const savedLikes = localStorage.getItem('vibe_player_likes');
+        if (savedLikes) {
+            const likedTrackIds = JSON.parse(savedLikes);
+            tracks.forEach(t => {
+                if (likedTrackIds.includes(t.videoId || t.id)) {
+                    t.isLiked = true;
+                }
+            });
+        }
+        
+        const savedPlaylists = localStorage.getItem('vibe_player_playlists');
+        if (savedPlaylists) {
+            customPlaylists = JSON.parse(savedPlaylists);
+        }
+    } catch(e) { console.warn('Failed to load saved data:', e); }
+    
+    renderSidebarPlaylists();
 }
 
 function saveYouTubeTracks() {
@@ -37,6 +57,57 @@ function saveYouTubeTracks() {
         const ytTracks = tracks.filter(t => t.type === 'youtube');
         localStorage.setItem('vibe_player_yt_tracks', JSON.stringify(ytTracks));
     } catch(e) { console.warn('Failed to save tracks:', e); }
+}
+
+function saveLikes() {
+    const likes = tracks.filter(t => t.isLiked).map(t => t.videoId || t.id);
+    try { localStorage.setItem('vibe_player_likes', JSON.stringify(likes)); } catch(e) {}
+}
+
+function toggleLike(identifier) {
+    const track = tracks.find(t => t.id === identifier || t.videoId === identifier);
+    if (!track) return;
+    track.isLiked = !track.isLiked;
+    saveLikes();
+    
+    if (currentTrackIndex >= 0 && (tracks[currentTrackIndex].id === identifier || tracks[currentTrackIndex].videoId === identifier)) {
+        $('#npLike').classList.toggle('active', track.isLiked);
+    }
+    
+    renderTracks();
+    updateSongCount();
+}
+
+function saveCustomPlaylists() {
+    try { localStorage.setItem('vibe_player_playlists', JSON.stringify(customPlaylists)); } catch(e) {}
+}
+
+function renderSidebarPlaylists() {
+    const container = $('#customPlaylistsContainer');
+    if (!container) return;
+    container.innerHTML = '';
+    customPlaylists.forEach(pl => {
+        const a = document.createElement('a');
+        a.href = '#';
+        a.className = 'playlist-item ' + (currentPlaylist === pl.id ? 'active-playlist' : '');
+        a.dataset.id = pl.id;
+        a.innerHTML = `
+            <div class="playlist-thumb gradient-1">
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55C7.79 13 6 14.79 6 17s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/>
+                </svg>
+            </div>
+            <div class="playlist-info">
+                <span class="playlist-name">${pl.name}</span>
+                <span class="playlist-meta">${pl.trackIds.length} songs</span>
+            </div>
+        `;
+        a.addEventListener('click', (e) => {
+            e.preventDefault();
+            selectCustomPlaylist(pl.id);
+        });
+        container.appendChild(a);
+    });
 }
 
 // ===== DOM =====
@@ -215,22 +286,78 @@ function showStatus(msg, type) {
     el.className = 'yt-status ' + (type || '');
 }
 
+function selectCustomPlaylist(id) {
+    currentPlaylist = id;
+    const pl = customPlaylists.find(p => p.id === id);
+    if (!pl) return;
+    
+    $$('.playlist-item').forEach(el => el.classList.remove('active-playlist'));
+    const sidebarItem = $(`.playlist-item[data-id="${id}"]`);
+    if (sidebarItem) sidebarItem.classList.add('active-playlist');
+    
+    $('.hero-title').textContent = pl.name;
+    $('.hero-description').textContent = 'Your custom playlist.';
+    $('.hero-badge').textContent = 'PLAYLIST';
+    $('.hero-badge').style.background = 'rgba(255, 255, 255, 0.2)';
+    $('.hero-badge').style.color = '#fff';
+    updateBackgroundAccent('88, 101, 242'); // Different color for custom playlists
+    
+    renderTracks();
+    updateSongCount();
+}
+
 function updateSongCount() {
-    const count = tracks.length;
+    let visibleTracks = tracks;
+    if (currentPlaylist === 'liked') {
+        visibleTracks = tracks.filter(t => t.isLiked);
+    } else if (currentPlaylist.startsWith('custom_')) {
+        const pl = customPlaylists.find(p => p.id === currentPlaylist);
+        visibleTracks = pl ? tracks.filter(t => pl.trackIds.includes(t.videoId || t.id)) : [];
+    }
+    const count = visibleTracks.length;
+    
     // Update hero meta
     const metaItems = $$('.hero-meta-item');
     if (metaItems[1]) metaItems[1].textContent = `${count} songs`;
-    // Update sidebar
-    const playlistMeta = document.querySelector('#playlistLofi .playlist-meta');
-    if (playlistMeta) playlistMeta.textContent = `${count} songs`;
+    
+    // Update sidebar counts
+    const lofiMeta = document.querySelector('#playlistLofi .playlist-meta');
+    if (lofiMeta) lofiMeta.textContent = `${tracks.length} songs`;
+    
+    const likedMeta = document.querySelector('#playlistLiked .playlist-meta');
+    if (likedMeta) likedMeta.textContent = `${tracks.filter(t => t.isLiked).length} songs`;
+    
+    customPlaylists.forEach(pl => {
+        const sidebarItemMeta = document.querySelector(`.playlist-item[data-id="${pl.id}"] .playlist-meta`);
+        if (sidebarItemMeta) sidebarItemMeta.textContent = `${pl.trackIds.length} songs`;
+    });
 }
 
 // ===== Render Tracks =====
 function renderTracks() {
-    tracks.forEach((track, i) => appendTrackRow(track, i));
+    $('#trackList').innerHTML = '';
+    
+    let visibleTracks = tracks;
+    if (currentPlaylist === 'liked') {
+        visibleTracks = tracks.filter(t => t.isLiked);
+    } else if (currentPlaylist.startsWith('custom_')) {
+        const pl = customPlaylists.find(p => p.id === currentPlaylist);
+        visibleTracks = pl ? tracks.filter(t => pl.trackIds.includes(t.videoId || t.id)) : [];
+    }
+    
+    visibleTracks.forEach(track => {
+        const i = tracks.indexOf(track);
+        appendTrackRow(track, i);
+    });
+    
     // Load durations for audio tracks
-    tracks.filter(t => t.type === 'audio').forEach((track, i) => {
+    visibleTracks.filter(t => t.type === 'audio').forEach((track) => {
         const idx = tracks.indexOf(track);
+        if (track.duration) {
+            const el = $(`#duration-${idx}`);
+            if (el) el.textContent = formatTime(track.duration);
+            return;
+        }
         const tempAudio = new Audio();
         tempAudio.crossOrigin = "anonymous";
         tempAudio.preload = "metadata";
@@ -242,6 +369,7 @@ function renderTracks() {
             updateTotalDuration();
         });
     });
+    updateTotalDuration();
 }
 
 function appendTrackRow(track, i) {
@@ -254,6 +382,12 @@ function appendTrackRow(track, i) {
     const ytBadge = track.type === 'youtube'
         ? `<span class="yt-badge"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M23.498 6.186a3.016 3.016 0 00-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 00.502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 002.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 002.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>YT</span>`
         : '';
+
+    const deleteBtn = track.type === 'youtube'
+        ? `<button class="yt-delete-btn" title="Remove track"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>`
+        : '';
+        
+    const likeBtn = `<button class="track-like-btn ${track.isLiked ? 'active' : ''}" title="Like track"><svg viewBox="0 0 24 24" fill="${track.isLiked ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg></button>`;
 
     row.innerHTML = `
         <div class="track-num">
@@ -270,10 +404,100 @@ function appendTrackRow(track, i) {
             </div>
         </div>
         <span class="track-album">${track.album}</span>
-        <span class="track-duration" id="duration-${i}">${track.type === 'youtube' ? '—' : '--:--'}</span>
+        <div class="track-actions">
+            ${likeBtn}
+            <span class="track-duration" id="duration-${i}">${track.type === 'youtube' ? '—' : '--:--'}</span>
+            ${deleteBtn}
+            <button class="track-more-btn" title="More options">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="1"></circle>
+                    <circle cx="12" cy="5" r="1"></circle>
+                    <circle cx="12" cy="19" r="1"></circle>
+                </svg>
+            </button>
+        </div>
     `;
-    row.addEventListener('click', () => playTrack(i));
+    row.addEventListener('click', (e) => {
+        if (e.target.closest('.yt-delete-btn')) {
+            e.stopPropagation();
+            deleteTrack(i);
+        } else if (e.target.closest('.track-like-btn')) {
+            e.stopPropagation();
+            toggleLike(track.id || track.videoId);
+        } else if (e.target.closest('.track-more-btn')) {
+            e.stopPropagation();
+            showContextMenu(e, track.id || track.videoId);
+        } else {
+            playTrack(i);
+        }
+    });
     container.appendChild(row);
+}
+
+// ===== Context Menu Logic =====
+function showContextMenu(e, trackId) {
+    contextMenuTargetTrackId = trackId;
+    const menu = $('#contextMenu');
+    const list = $('#contextMenuList');
+    
+    list.innerHTML = '';
+    
+    if (customPlaylists.length === 0) {
+        list.innerHTML = '<div class="context-menu-empty">No custom playlists</div>';
+    } else {
+        customPlaylists.forEach(pl => {
+            const btn = document.createElement('button');
+            btn.className = 'context-menu-item';
+            btn.textContent = pl.name;
+            btn.addEventListener('click', () => {
+                addToCustomPlaylist(pl.id, contextMenuTargetTrackId);
+                hideContextMenu();
+            });
+            list.appendChild(btn);
+        });
+    }
+    
+    menu.classList.add('show');
+    
+    // Position menu
+    const rect = menu.getBoundingClientRect();
+    let x = e.clientX - rect.width; // open to the left
+    let y = e.clientY;
+    
+    if (x < 10) x = e.clientX + 10; // if too far left, open to right
+    if (y + rect.height > window.innerHeight) {
+        y = window.innerHeight - rect.height - 10;
+    }
+    
+    menu.style.left = x + 'px';
+    menu.style.top = y + 'px';
+}
+
+function hideContextMenu() {
+    $('#contextMenu').classList.remove('show');
+    contextMenuTargetTrackId = null;
+}
+
+document.addEventListener('click', (e) => {
+    if (!e.target.closest('#contextMenu') && !e.target.closest('.track-more-btn')) {
+        hideContextMenu();
+    }
+});
+
+function addToCustomPlaylist(playlistId, trackId) {
+    const pl = customPlaylists.find(p => p.id === playlistId);
+    if (!pl) return;
+    
+    if (!pl.trackIds.includes(trackId)) {
+        pl.trackIds.push(trackId);
+        saveCustomPlaylists();
+        updateSongCount();
+        showStatus('Added to ' + pl.name, 'success');
+        setTimeout(() => showStatus('', ''), 3000);
+    } else {
+        showStatus('Already in playlist', '');
+        setTimeout(() => showStatus('', ''), 3000);
+    }
 }
 
 function updateTotalDuration() {
@@ -286,6 +510,40 @@ function updateTotalDuration() {
 }
 
 // ===== Playback (Dual Engine) =====
+function deleteTrack(index) {
+    if (index < 0 || index >= tracks.length || tracks[index].type !== 'youtube') return;
+    
+    const isCurrent = currentTrackIndex === index;
+    
+    // Remove from array
+    tracks.splice(index, 1);
+    
+    // Update local storage
+    saveYouTubeTracks();
+    
+    // Update currentTrackIndex if it shifted
+    if (currentTrackIndex > index) {
+        currentTrackIndex--;
+    } else if (isCurrent) {
+        stopAll();
+        currentTrackIndex = -1;
+        updatePlayPauseUI();
+        $('#npTrackName').textContent = "Select a track";
+        $('#npArtistName').textContent = "—";
+        $('#npAlbumImg').src = "donut_album_art.png";
+        $('#npTotalTime').textContent = "0:00";
+        $('#npCurrentTime').textContent = "0:00";
+        $('#progressBarFill').style.width = '0%';
+        $('#progressBarHandle').style.left = '0%';
+        updateBackgroundAccent("20, 20, 20");
+    }
+    
+    // Re-render
+    renderTracks();
+    updateSongCount();
+    updateTrackHighlight();
+}
+
 function playTrack(index) {
     if (index < 0 || index >= tracks.length) return;
     const track = tracks[index];
@@ -409,6 +667,7 @@ function updateNowPlayingInfo() {
     $('#npTrackName').textContent = track.title;
     $('#npArtistName').textContent = track.artist;
     $('#npAlbumImg').src = track.cover;
+    $('#npLike').classList.toggle('active', !!track.isLiked);
     document.title = `${track.title} • ${track.artist} — Vibe Player`;
 }
 
@@ -547,7 +806,63 @@ $('#npRepeat').addEventListener('click', () => {
         : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 014-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 01-4 4H3"/></svg>';
 });
 
-$('#npLike').addEventListener('click', function() { this.classList.toggle('active'); });
+$('#npLike').addEventListener('click', function() {
+    if (currentTrackIndex >= 0) {
+        const track = tracks[currentTrackIndex];
+        toggleLike(track.id || track.videoId);
+    } else {
+        this.classList.toggle('active');
+    }
+});
+
+// ===== Sidebar Events =====
+$('#playlistLofi').addEventListener('click', (e) => {
+    e.preventDefault();
+    currentPlaylist = 'lofi';
+    $('#playlistLofi').classList.add('active-playlist');
+    $('#playlistLiked').classList.remove('active-playlist');
+    
+    $('.hero-title').textContent = 'Lo-Fi Vibes';
+    $('.hero-description').textContent = 'Chill beats for focus, study, and relaxation. Let the smooth melodies carry you through your day.';
+    $('.hero-badge').textContent = 'PLAYLIST';
+    $('.hero-badge').style.background = 'rgba(255, 255, 255, 0.2)';
+    $('.hero-badge').style.color = '#fff';
+    updateBackgroundAccent('168, 85, 247');
+    
+    renderTracks();
+    updateSongCount();
+});
+
+$('#playlistLiked').addEventListener('click', (e) => {
+    e.preventDefault();
+    currentPlaylist = 'liked';
+    $('#playlistLiked').classList.add('active-playlist');
+    $('#playlistLofi').classList.remove('active-playlist');
+    
+    $('.hero-title').textContent = 'Liked Songs';
+    $('.hero-description').textContent = 'All the tracks you have loved.';
+    $('.hero-badge').textContent = 'FAVORITES';
+    $('.hero-badge').style.background = 'var(--accent)';
+    $('.hero-badge').style.color = '#000';
+    updateBackgroundAccent('29, 185, 84');
+    
+    renderTracks();
+    updateSongCount();
+});
+
+$('#btnCreatePlaylist').addEventListener('click', () => {
+    const name = prompt('Enter a name for your new playlist:');
+    if (name && name.trim()) {
+        const newId = 'custom_' + Date.now();
+        customPlaylists.push({
+            id: newId,
+            name: name.trim(),
+            trackIds: []
+        });
+        saveCustomPlaylists();
+        renderSidebarPlaylists();
+    }
+});
 
 // ===== YouTube Add Events =====
 $('#ytAddBtn').addEventListener('click', addYouTubeTrack);
@@ -655,7 +970,7 @@ function formatTime(sec) {
 }
 
 // ===== Init =====
-loadSavedTracks();
+loadSavedData();
 renderTracks();
 updateVolumeUI(currentVolume);
 updateSongCount();

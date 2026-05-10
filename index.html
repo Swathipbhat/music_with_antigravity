@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="A premium Spotify-like music player with beautiful UI and smooth playback">
+    <title>Vibe Player — Your Music, Your Mood</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="index.css">
+</head>
+<body>
+    <!-- Animated background -->
+    <div class="bg-gradient" id="bgGradient"></div>
+    <div class="bg-noise"></div>
+
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <div class="logo-icon">
+                        <svg viewBox="0 0 24 24" fill="none">
+                            <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.5"/>
+                            <path d="M8 15C9 13 11 11.5 15 11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                            <path d="M8 11.5C9 10 11 9 14 8.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                            <path d="M9 8C10 7.2 11.5 6.8 13 6.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                        </svg>
+                    </div>
+                    <span class="logo-text">Vibe Player</span>
+                </div>
+            </div>
+
+            <nav class="sidebar-nav">
+                <a href="#" class="nav-item active" id="navHome">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M9 21V12h6v9" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    <span>Home</span>
+                </a>
+                <a href="#" class="nav-item" id="navSearch">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <circle cx="11" cy="11" r="7"/>
+                        <path d="M21 21l-4.35-4.35" stroke-linecap="round"/>
+                    </svg>
+                    <span>Search</span>
+                </a>
+                <a href="#" class="nav-item" id="navLibrary">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <path d="M4 19.5A2.5 2.5 0 016.5 17H20"/>
+                        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/>
+                    </svg>
+                    <span>Your Library</span>
+                </a>
+            </nav>
+
+            <div class="sidebar-divider"></div>
+
+            <div class="playlist-section">
+                <div class="playlist-header">
+                    <span>Playlists</span>
+                    <button class="btn-icon" id="btnCreatePlaylist" title="Create Playlist">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <line x1="12" y1="5" x2="12" y2="19"/>
+                            <line x1="5" y1="12" x2="19" y2="12"/>
+                        </svg>
+                    </button>
+                </div>
+                <div class="playlist-list">
+                    <a href="#" class="playlist-item active-playlist" id="playlistLofi">
+                        <div class="playlist-thumb gradient-1">
+                            <svg viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55C7.79 13 6 14.79 6 17s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/>
+                            </svg>
+                        </div>
+                        <div class="playlist-info">
+                            <span class="playlist-name">Lo-Fi Vibes</span>
+                            <span class="playlist-meta">2 songs</span>
+                        </div>
+                    </a>
+                    <a href="#" class="playlist-item" id="playlistLiked">
+                        <div class="playlist-thumb gradient-2">
+                            <svg viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                            </svg>
+                        </div>
+                        <div class="playlist-info">
+                            <span class="playlist-name">Liked Songs</span>
+                            <span class="playlist-meta">0 songs</span>
+                        </div>
+                    </a>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content" id="mainContent">
+            <!-- Top bar -->
+            <header class="top-bar" id="topBar">
+                <div class="top-bar-nav">
+                    <button class="btn-circle" id="btnBack" title="Go Back">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="15,18 9,12 15,6"/>
+                        </svg>
+                    </button>
+                    <button class="btn-circle" id="btnForward" title="Go Forward">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="9,18 15,12 9,6"/>
+                        </svg>
+                    </button>
+                </div>
+                <div class="top-bar-right">
+                    <button class="btn-pill" id="btnUpgrade">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:16px;height:16px">
+                            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                        </svg>
+                        <span>Premium</span>
+                    </button>
+                    <div class="user-avatar" id="userAvatar">
+                        <span>S</span>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Hero Section -->
+            <section class="hero-section" id="heroSection">
+                <div class="hero-gradient"></div>
+                <div class="hero-content">
+                    <div class="hero-badge">PLAYLIST</div>
+                    <h1 class="hero-title">Lo-Fi Vibes</h1>
+                    <p class="hero-description">Chill beats for focus, study, and relaxation. Let the smooth melodies carry you through your day.</p>
+                    <div class="hero-meta">
+                        <span class="hero-meta-item">
+                            <div class="meta-avatar">S</div>
+                            Swathi
+                        </span>
+                        <span class="hero-dot">•</span>
+                        <span class="hero-meta-item">2 songs</span>
+                        <span class="hero-dot">•</span>
+                        <span class="hero-meta-item" id="totalDuration">loading...</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Action Bar -->
+            <div class="action-bar" id="actionBar">
+                <button class="btn-play-large" id="btnPlayAll" title="Play All">
+                    <svg viewBox="0 0 24 24" fill="currentColor">
+                        <polygon points="5,3 19,12 5,21"/>
+                    </svg>
+                </button>
+                <button class="btn-icon-action" id="btnShuffle" title="Shuffle">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <polyline points="16 3 21 3 21 8"/>
+                        <line x1="4" y1="20" x2="21" y2="3"/>
+                        <polyline points="21 16 21 21 16 21"/>
+                        <line x1="15" y1="15" x2="21" y2="21"/>
+                        <line x1="4" y1="4" x2="9" y2="9"/>
+                    </svg>
+                </button>
+                <button class="btn-icon-action liked" id="btnLikePlaylist" title="Like Playlist">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/>
+                    </svg>
+                </button>
+                <button class="btn-icon-action" id="btnMore" title="More Options">
+                    <svg viewBox="0 0 24 24" fill="currentColor">
+                        <circle cx="12" cy="5" r="1.5"/>
+                        <circle cx="12" cy="12" r="1.5"/>
+                        <circle cx="12" cy="19" r="1.5"/>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- YouTube Add Section -->
+            <div class="yt-add-section" id="ytAddSection">
+                <div class="yt-input-wrapper">
+                    <div class="yt-input-icon">
+                        <svg viewBox="0 0 24 24" fill="currentColor" style="width:20px;height:20px;color:#ff0033">
+                            <path d="M23.498 6.186a3.016 3.016 0 00-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 00.502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 002.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 002.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+                        </svg>
+                    </div>
+                    <input type="text" class="yt-input" id="ytUrlInput" placeholder="Paste a YouTube URL to add it to your playlist..." autocomplete="off">
+                    <button class="yt-add-btn" id="ytAddBtn" title="Add to Playlist">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px">
+                            <line x1="12" y1="5" x2="12" y2="19"/>
+                            <line x1="5" y1="12" x2="19" y2="12"/>
+                        </svg>
+                        <span>Add</span>
+                    </button>
+                </div>
+                <div class="yt-status" id="ytStatus"></div>
+            </div>
+
+            <!-- Track List -->
+            <div class="track-list" id="trackList">
+                <div class="track-list-header">
+                    <span class="track-col-num">#</span>
+                    <span class="track-col-title">TITLE</span>
+                    <span class="track-col-album">ALBUM</span>
+                    <span class="track-col-duration">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:16px;height:16px">
+                            <circle cx="12" cy="12" r="10"/>
+                            <polyline points="12 6 12 12 16 14"/>
+                        </svg>
+                    </span>
+                </div>
+                <!-- Tracks will be injected by JS -->
+            </div>
+
+            <!-- Footer -->
+            <footer class="main-footer">
+                <p>Made with ♥ — Free to use music</p>
+            </footer>
+        </main>
+    </div>
+
+    <!-- Now Playing Bar -->
+    <div class="now-playing-bar" id="nowPlayingBar">
+        <!-- Track Info -->
+        <div class="np-track-info" id="npTrackInfo">
+            <div class="np-album-art" id="npAlbumArt">
+                <img src="donut_album_art.png" alt="Album Art" id="npAlbumImg">
+            </div>
+            <div class="np-track-details">
+                <span class="np-track-name" id="npTrackName">Select a track</span>
+                <span class="np-artist-name" id="npArtistName">—</span>
+            </div>
+            <button class="btn-icon-sm np-like" id="npLike" title="Like">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/>
+                </svg>
+            </button>
+        </div>
+
+        <!-- Player Controls -->
+        <div class="np-controls">
+            <div class="np-controls-buttons">
+                <button class="btn-icon-sm" id="npShuffle" title="Shuffle">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <polyline points="16 3 21 3 21 8"/>
+                        <line x1="4" y1="20" x2="21" y2="3"/>
+                        <polyline points="21 16 21 21 16 21"/>
+                        <line x1="15" y1="15" x2="21" y2="21"/>
+                        <line x1="4" y1="4" x2="9" y2="9"/>
+                    </svg>
+                </button>
+                <button class="btn-icon-sm" id="npPrev" title="Previous">
+                    <svg viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M6 6h2v12H6V6zm3.5 6l8.5 6V6l-8.5 6z"/>
+                    </svg>
+                </button>
+                <button class="btn-play-main" id="npPlayPause" title="Play">
+                    <svg viewBox="0 0 24 24" fill="currentColor" id="playIcon">
+                        <polygon points="5,3 19,12 5,21"/>
+                    </svg>
+                    <svg viewBox="0 0 24 24" fill="currentColor" id="pauseIcon" style="display:none">
+                        <rect x="6" y="4" width="4" height="16"/>
+                        <rect x="14" y="4" width="4" height="16"/>
+                    </svg>
+                </button>
+                <button class="btn-icon-sm" id="npNext" title="Next">
+                    <svg viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M6 18l8.5-6L6 6v12zm10-12v12h2V6h-2z"/>
+                    </svg>
+                </button>
+                <button class="btn-icon-sm" id="npRepeat" title="Repeat">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <polyline points="17 1 21 5 17 9"/>
+                        <path d="M3 11V9a4 4 0 014-4h14"/>
+                        <polyline points="7 23 3 19 7 15"/>
+                        <path d="M21 13v2a4 4 0 01-4 4H3"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="np-progress">
+                <span class="np-time" id="npCurrentTime">0:00</span>
+                <div class="progress-bar-container" id="progressBarContainer">
+                    <div class="progress-bar-bg">
+                        <div class="progress-bar-fill" id="progressBarFill"></div>
+                        <div class="progress-bar-handle" id="progressBarHandle"></div>
+                    </div>
+                </div>
+                <span class="np-time" id="npTotalTime">0:00</span>
+            </div>
+        </div>
+
+        <!-- Extra Controls -->
+        <div class="np-extra-controls">
+            <button class="btn-icon-sm" id="npQueue" title="Queue">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <line x1="8" y1="6" x2="21" y2="6"/>
+                    <line x1="8" y1="12" x2="21" y2="12"/>
+                    <line x1="8" y1="18" x2="21" y2="18"/>
+                    <line x1="3" y1="6" x2="3.01" y2="6"/>
+                    <line x1="3" y1="12" x2="3.01" y2="12"/>
+                    <line x1="3" y1="18" x2="3.01" y2="18"/>
+                </svg>
+            </button>
+            <button class="btn-icon-sm" id="npDevices" title="Devices">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
+                    <line x1="8" y1="21" x2="16" y2="21"/>
+                    <line x1="12" y1="17" x2="12" y2="21"/>
+                </svg>
+            </button>
+            <div class="volume-control" id="volumeControl">
+                <button class="btn-icon-sm" id="npVolume" title="Volume">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" id="volumeIcon">
+                        <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+                        <path d="M19.07 4.93a10 10 0 010 14.14" id="volHigh"/>
+                        <path d="M15.54 8.46a5 5 0 010 7.07" id="volMed"/>
+                    </svg>
+                </button>
+                <div class="volume-slider-container" id="volumeSliderContainer">
+                    <div class="volume-slider-bg">
+                        <div class="volume-slider-fill" id="volumeSliderFill"></div>
+                        <div class="volume-slider-handle" id="volumeSliderHandle"></div>
+                    </div>
+                </div>
+            </div>
+            <button class="btn-icon-sm" id="npFullscreen" title="Fullscreen">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <polyline points="15 3 21 3 21 9"/>
+                    <polyline points="9 21 3 21 3 15"/>
+                    <line x1="21" y1="3" x2="14" y2="10"/>
+                    <line x1="3" y1="21" x2="10" y2="14"/>
+                </svg>
+            </button>
+        </div>
+    </div>
+
+    <!-- Visualizer Canvas (hidden by default) -->
+    <canvas id="visualizerCanvas" class="visualizer-canvas"></canvas>
+
+    <!-- Hidden YouTube Player -->
+    <div class="yt-player-container" id="ytPlayerContainer">
+        <div id="ytPlayer"></div>
+    </div>
+
+    <script src="https://www.youtube.com/iframe_api"></script>
+    <script src="app.js"></script>
+</body>
+</html>

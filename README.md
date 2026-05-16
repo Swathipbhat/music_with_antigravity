@@ -23,6 +23,7 @@
 ## 3. Architecture & Technologies
 
 The application is built entirely using **Vanilla Web Technologies** (HTML5, CSS3, JavaScript ES6) without the overhead of heavy frameworks like React or Angular. This ensures fast load times and absolute control over DOM manipulation.
+Uses *console.cloudinary.com* in case of using the offline songs. As this website holds downloaded songs which can be used without iternet in our application.
 
 ### 3.1. Frontend Structure
 *   `index.html`: Defines the structural semantics, including the sidebar navigation, main content area (Hero Section + Track List), the fixed Now Playing bar, and hidden containers for the visualizer and YouTube IFrame.
